@@ -71,7 +71,10 @@ class MainViewModel @Inject constructor(private val repository: MovieRepository)
     }
 
     fun onFragmentReady() {
-        fetchPopularMovies()
+        //This stops invoking API more than once
+        if (_popularMoviesLiveData.value.isNullOrEmpty()) {
+            fetchPopularMovies()
+        }
     }
 
     fun onSearchQuery(query: String) {
