@@ -34,57 +34,63 @@
 
 package com.raywenderlich.android.movieapp.ui
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.raywenderlich.android.movieapp.framework.network.MovieRepository
 import com.raywenderlich.android.movieapp.framework.network.model.Movie
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.raywenderlich.android.movieapp.ui.movies.MovieLoadingState
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(private val repository: MovieRepository) :
     ViewModel() {
 
-  val searchMoviesLiveData = MutableLiveData<List<Movie>>()
-  private var debouncePeriod: Long = 500
-  private var searchJob: Job? = null
+    val searchMoviesLiveData = MutableLiveData<List<Movie>>()
+    val movieLoadingStateLiveData = MutableLiveData<MovieLoadingState>()
 
-  fun onFragmentReady() {
-    //TODO Fetch Popular Movies
-  }
+    private var debouncePeriod: Long = 500
+    private var searchJob: Job? = null
 
-  fun onSearchQuery(query: String) {
-    searchJob?.cancel()
-    searchJob = viewModelScope.launch {
-      delay(debouncePeriod)
-      if (query.length > 2) {
-        fetchMovieByQuery(query)
-      }
+    fun onFragmentReady() {
+        //TODO Fetch Popular Movies
     }
-  }
 
-  private fun fetchPopularMovies() {
-    viewModelScope.launch(Dispatchers.IO) {
-      val movies = repository.fetchPopularMovies()
+    fun onSearchQuery(query: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(debouncePeriod)
+            if (query.length > 2) {
+                fetchMovieByQuery(query)
+            }
+        }
     }
-  }
 
-  private fun fetchMovieByQuery(query: String) {
-    viewModelScope.launch(Dispatchers.IO) {
-      val movies = repository.fetchMovieByQuery(query)
-      // TODO: Update asynchronously
+    private fun fetchPopularMovies() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val movies = repository.fetchPopularMovies()
+        }
     }
-  }
 
-  fun onMovieClicked(movie: Movie) {
-    // TODO handle navigation to details screen event
-  }
+    private fun fetchMovieByQuery(query: String): LiveData<List<Movie>> {
+        //2
+        val liveData = MutableLiveData<List<Movie>>()
+        viewModelScope.launch(Dispatchers.IO) {
+            val movies = repository.fetchMovieByQuery(query)
+            //3
+            liveData.postValue(movies)
+        }
+        //4
+        return liveData
+    }
 
-  override fun onCleared() {
-    super.onCleared()
-    searchJob?.cancel()
-  }
+    fun onMovieClicked(movie: Movie) {
+        // TODO handle navigation to details screen event
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        searchJob?.cancel()
+    }
 }
