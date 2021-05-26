@@ -35,6 +35,7 @@
 package com.raywenderlich.android.movieapp.ui
 
 import androidx.lifecycle.*
+import com.raywenderlich.android.movieapp.Event
 import com.raywenderlich.android.movieapp.framework.network.MovieRepository
 import com.raywenderlich.android.movieapp.framework.network.model.Movie
 import com.raywenderlich.android.movieapp.ui.movies.MovieLoadingState
@@ -54,17 +55,19 @@ class MainViewModel @Inject constructor(private val repository: MovieRepository)
     private val _popularMoviesLiveData = MutableLiveData<List<Movie>>()
     val moviesMediatorData = MediatorLiveData<List<Movie>>()
 
+    private val _navigateToDetails = MutableLiveData<Event<String>>()
+    val navigateToDetails: LiveData<Event<String>>
+        get() = _navigateToDetails
+
     init {
         _searchMoviesLiveData = Transformations.switchMap(_searchFieldTextLiveData) {
             fetchMovieByQuery(it)
         }
 
-        //1
         moviesMediatorData.addSource(_popularMoviesLiveData) {
             moviesMediatorData.value = it
         }
 
-        //2
         moviesMediatorData.addSource(_searchMoviesLiveData) {
             moviesMediatorData.value = it
         }
@@ -112,7 +115,9 @@ class MainViewModel @Inject constructor(private val repository: MovieRepository)
     }
 
     fun onMovieClicked(movie: Movie) {
-        // TODO handle navigation to details screen event
+        movie.title?.let {
+            _navigateToDetails.value = Event(it)
+        }
     }
 
     override fun onCleared() {

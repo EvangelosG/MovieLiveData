@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.raywenderlich.android.movieapp.MovieApplication.Companion.application
 import com.raywenderlich.android.movieapp.R
 import com.raywenderlich.android.movieapp.connectivity.ConnectivityLiveData
@@ -97,6 +98,13 @@ class MovieListFragment : Fragment(R.layout.fragment_movie_list),
         })
         mainViewModel.movieLoadingStateLiveData.observe(viewLifecycleOwner, Observer {
             onMovieLoadingStateChanged(it)
+        })
+        mainViewModel.navigateToDetails.observe(viewLifecycleOwner, Observer {
+            it?.getContentIfNotHandled()?.let { movieTitle ->
+                findNavController().navigate(
+                    MovieListFragmentDirections.actionMovieClicked(movieTitle)
+                )
+            }
         })
         connectivityLiveData.observe(viewLifecycleOwner, Observer { isAvailable ->
             when (isAvailable) {
