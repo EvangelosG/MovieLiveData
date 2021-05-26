@@ -53,88 +53,91 @@ import javax.inject.Inject
 class MovieListFragment : Fragment(R.layout.fragment_movie_list),
     MovieAdapter.MoviesClickListener {
 
-  private lateinit var mainViewModel: MainViewModel
-  private lateinit var movieAdapter: MovieAdapter
+    private lateinit var mainViewModel: MainViewModel
+    private lateinit var movieAdapter: MovieAdapter
 
-  @Inject
-  lateinit var viewModelFactory: ViewModelProvider.Factory
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
 
-  private val searchTextWatcher = object : TextWatcher {
-    override fun afterTextChanged(editable: Editable?) {
-      // Start the search
-      mainViewModel.onSearchQuery(editable.toString())
-    }
-
-    override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-
-    override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-  }
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-
-    application.appComponent.inject(this)
-    mainViewModel = ViewModelProvider(requireActivity(), viewModelFactory).get(
-        MainViewModel::class.java)
-  }
-
-  override fun onActivityCreated(savedInstanceState: Bundle?) {
-    super.onActivityCreated(savedInstanceState)
-    initialiseObservers()
-    initialiseUIElements()
-  }
-
-  private fun initialiseObservers() {
-    mainViewModel.searchMoviesLiveData.observe(viewLifecycleOwner, Observer {
-      movieAdapter.updateData(it)
-    })
-    mainViewModel.movieLoadingStateLiveData.observe(viewLifecycleOwner, Observer {
-      onMovieLoadingStateChanged(it)
-    })
-  }
-
-  private fun initialiseUIElements() {
-    searchEditText.addTextChangedListener(searchTextWatcher)
-    movieAdapter = MovieAdapter(this)
-    moviesRecyclerView.apply {
-      adapter = movieAdapter
-      hasFixedSize()
-    }
-  }
-
-  override fun onMovieClicked(movie: Movie) {
-    mainViewModel.onMovieClicked(movie)
-  }
-
-  private fun onMovieLoadingStateChanged(state: MovieLoadingState) {
-    when (state) {
-      MovieLoadingState.LOADING -> {
-        statusButton.visibility = View.GONE
-        moviesRecyclerView.visibility = View.GONE
-        loadingProgressBar.visibility = View.VISIBLE
-      }
-      MovieLoadingState.LOADED -> {
-        statusButton.visibility = View.GONE
-        moviesRecyclerView.visibility = View.VISIBLE
-        loadingProgressBar.visibility = View.GONE
-      }
-      MovieLoadingState.ERROR -> {
-        statusButton.visibility = View.VISIBLE
-        context?.let {
-          statusButton.setCompoundDrawables(
-              null, ContextCompat.getDrawable(it, R.drawable.no_internet), null,
-              null)
+    private val searchTextWatcher = object : TextWatcher {
+        override fun afterTextChanged(editable: Editable?) {
+            // Start the search
+            mainViewModel.onSearchQuery(editable.toString())
         }
-        moviesRecyclerView.visibility = View.GONE
-        loadingProgressBar.visibility = View.GONE
-      }
-      MovieLoadingState.INVALID_API_KEY -> {
-        statusButton.visibility = View.VISIBLE
-        statusButton.text = getString(R.string.invalid_api_key)
-        statusButton.setCompoundDrawables(null, null, null, null)
-        moviesRecyclerView.visibility = View.GONE
-        loadingProgressBar.visibility = View.GONE
-      }
+
+        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+
+        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
     }
-  }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        application.appComponent.inject(this)
+        mainViewModel = ViewModelProvider(requireActivity(), viewModelFactory).get(
+            MainViewModel::class.java
+        )
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        initialiseObservers()
+        initialiseUIElements()
+        mainViewModel.onFragmentReady()
+    }
+
+    private fun initialiseObservers() {
+        mainViewModel.moviesMediatorData.observe(viewLifecycleOwner, Observer {
+            movieAdapter.updateData(it)
+        })
+        mainViewModel.movieLoadingStateLiveData.observe(viewLifecycleOwner, Observer {
+            onMovieLoadingStateChanged(it)
+        })
+    }
+
+    private fun initialiseUIElements() {
+        searchEditText.addTextChangedListener(searchTextWatcher)
+        movieAdapter = MovieAdapter(this)
+        moviesRecyclerView.apply {
+            adapter = movieAdapter
+            hasFixedSize()
+        }
+    }
+
+    override fun onMovieClicked(movie: Movie) {
+        mainViewModel.onMovieClicked(movie)
+    }
+
+    private fun onMovieLoadingStateChanged(state: MovieLoadingState) {
+        when (state) {
+            MovieLoadingState.LOADING -> {
+                statusButton.visibility = View.GONE
+                moviesRecyclerView.visibility = View.GONE
+                loadingProgressBar.visibility = View.VISIBLE
+            }
+            MovieLoadingState.LOADED -> {
+                statusButton.visibility = View.GONE
+                moviesRecyclerView.visibility = View.VISIBLE
+                loadingProgressBar.visibility = View.GONE
+            }
+            MovieLoadingState.ERROR -> {
+                statusButton.visibility = View.VISIBLE
+                context?.let {
+                    statusButton.setCompoundDrawables(
+                        null, ContextCompat.getDrawable(it, R.drawable.no_internet), null,
+                        null
+                    )
+                }
+                moviesRecyclerView.visibility = View.GONE
+                loadingProgressBar.visibility = View.GONE
+            }
+            MovieLoadingState.INVALID_API_KEY -> {
+                statusButton.visibility = View.VISIBLE
+                statusButton.text = getString(R.string.invalid_api_key)
+                statusButton.setCompoundDrawables(null, null, null, null)
+                moviesRecyclerView.visibility = View.GONE
+                loadingProgressBar.visibility = View.GONE
+            }
+        }
+    }
 }
